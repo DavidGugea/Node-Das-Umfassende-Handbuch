@@ -288,3 +288,210 @@ require("./my_module"); // output: Hello world
 delete require.cache[require.resolve('./my_module')];
 require("./my_module"); // output: Hello world
 ```
+
+# 5. HTTP
+
+## HTTP Web Server
+
+Here is an example of an HTTP Web Server:
+
+```JavaScript
+import { createServer } from 'http';
+
+createServer(
+    (request, response) => {
+        response.writeHead(200, {
+            'content-type': 'text/html'
+        });
+
+        const responseBody = `
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <title>Adressbuch</title>
+            </head> 
+            <body>
+                <h1>Adressbuch</h1>
+            </body>
+        </html>
+        `;
+        response.end(responseBody);
+    }
+).listen(8080, () => {
+    console.log("Adressbuch erreichbar unter http://localhost:8080");
+});
+```
+
+You are using the method ```createServer``` from the ```http``` module to build a server. The server then takes a callback that is executed every time a request is made to the server.
+The response then writes the head with a 200 status code and the content-type is set to html since the body of the response will be html code. The response is then ended and sent with the html code.
+
+Here is an overview of what the methods do:
+
+* ```createServer```
+    * This builds an instance of the ```Server``` class. It's the same as building an instance of ```Server``` using the ```new``` keyword. The callback function given to ```createServer``` is sent to the ```request```-Event of the Server. 
+* ```listen```
+    * The server starts listening for connections on the given port.
+* ```write```
+    * You write a part of the body. You can use this multiple times for each response.
+* ```end```
+    * You signal to the client that it has received the full message from the server. If you don't use this method, the client will stop the connection after a pre-defined configured time period.
+
+You can give thte ```listen``` method a TCP-Port and the server will listen to all IPv6-interfaces that have the given port. If IPv6 is not available, IPv4 will be used. 
+
+If the given port number is 0, the server will listen only listen to a certain port that you can access using the ```address``` function of the Server object. You can also give a specific host name to which the server can connect to.
+
+The third argument of the ```listen``` method is the length of the queue of the server for incoming connections. The default value is *511*.
+
+Regardless of the number of arguments that are given to the ```listen``` method, if you give it a callback, that callback will be executed when the Server has successfully connected. This callback method is usually used to given a signal to the users that the server is now waiting for incoming connections.
+
+If you have used the ```listen``` method to a Server, then the Server is going to wait for incoming connections. You can close the Server using the ```close``` method of the Server object.
+
+The methods ```write``` and ```end``` also accept ```Buffer``` objects. The default encoding is ```utf8```. The ```writeHead``` method is writing the head info. If you didn't execute ```writeHead``` before ```write```, then ```write``` will automatically write the head information for you. 
+
+If the ```write``` method returns ```true```, that means that the message has been sent successfully. If it returns ```false``` then that means that the message was put in a queue. When the buffer is free again, the ```drain```-Event will be dispatched.
+
+You can add HTTP trailing headers using the ```addTrailers``` method.
+
+### Server Events
+
+The following table represents some events that a server can react to:
+
+|Event|Description|
+|-----|-----------|
+|```request```|Incoming client request|
+|```connection```|A connection was built with a client|
+|```close```|The server is closing|
+|```checkContinue```|This event is dispatched when the Server receives a request with an ```Expect: 100-continue```-Header and the Server has to respond with the status code 100|
+|```checkExpectation```|This event is dispatched when the Server recieves a request with an ```Expect```-Header that doesn't have the value ```100-continue```. If this event dispatching callback function is not implemented then the Server will respond with ```417 Expectation Failed```|
+|```connect```|A client makes a request to the server using the ```CONNECT``` HTTP Method|
+|```upgrade```|A client makes a request to the server using the ```UPDATE``` HTTP Method|
+|```clientError```|A client has sent an error message|
+
+### The ```request``` object
+
+This is how an HTTP-Request is built:
+
+![HTTP Request Structure](ScreenshotsForNotes/Chapter5/HTTPRequestStructure.PNG)
+
+The header contains meta-information like for example in what format the response of the server should be. It contains key-value pairs that are defined in the HTTP-Standard.
+The body contains the data of the request. The body doesn't always contain data.
+
+### The properties of the ```request``` object
+
+The client uses the ```request``` object to tell the Server what he has to do. The header information of the request is inside the ```request``` object and the body is sent as a stream of multiple data packages. The ```request``` object must be seen as a read-only-object.
+
+This are the most important properties of the ```request``` object:
+
+* ```method```
+    * This is the HTTP method that the client has sent and describes what the Server must do with the requested resources. The value of this property can be ```GET```, ```POST```, ```PUT```, ```DELETE```, ```HEAD```, ```PATCH```, ```TRACE```, or ```OPTIONS```
+* ```url```
+    * The url from where the request was made
+* ```header```
+    * The HTTP header contains key-value pairs of meta information of the request. If the ```Accept```-Header is for example ```application/json``` that means that the client is expecting a JSON structure from the server.
+* ```trailers```
+    * The counterpart of headers are trailers.
+* ```httpVersion```
+    * The http version of the request
+* ```connection```
+    * This property gives you access to the socket-object that was used for the communication between the Server and the Client.
+
+### HTTP Status Codes
+
+The status codes represents the status of the request.
+Status codes can be put into 5 groups and each group has a different meaning:
+
+* *1xx*: informational response
+* *2xx*: success
+* *3xx*: redirection
+* *4xx*: client errors
+* *5xx*: server errors
+
+### The ```writeHead``` method
+
+The easiest way to define a correct response-header is to use the ```writeHead``` method. The ```writeHead``` method normally takes 2 arguments. The first argument is a number that represents the *status code* and the second one is the *object with the header information*. You can only use this method once and then you can't change the header information. You must execute this method before ```write``` or ```end```.
+
+You can also use the property ```statusCode``` and the method ```setHeader``` to set a status code and a header for the ```response``` object. The first argument of ```setHeader``` is the name of the field and the second one is the value. If you want to change the header information of a header use ```getHeader``` to read the value of a header and ```removeHeader``` to delete a information from the header.
+
+### How body data is processed
+
+Header information is taken directly from the request object. However, the information from the body is taken from a data stream that contains multiple packages. The request can contain multiple so-called *Chunks* of data. When a part of the request is ready to be read, the *```readable```-Event* is dispatched. You can use the ```read``` method inside the handler-function to read the chunk of data that was received from the data stream. When the request is ended, the *```end```-Event``` is disptached.
+
+## Node.js as Client
+
+### Requests with the ```http```-Module
+
+In order to make a request, you must provide the ```request```-function with a configuration object and a callback function that will execute as soon as you receive a response.
+
+Example:
+
+```JavaScript
+import {
+    request
+} from 'http';
+
+const options = new URL("https://jsonplaceholder.typicode.com/posts");
+
+request(
+    options,
+    response => {
+        let body = '';
+        response.on(
+            'data',
+            chunk => body += chunk
+        );
+
+        response.on(
+            'end',
+            () => console.log(body)
+        );
+    }
+)
+```
+
+The reponse is given again as a data-stream. You can use the data using the ```data```-Event. When the response is ended, the ```end```-Event is dispatched. When the ```end```-Event is dispatched, you can fully process the complete response.
+
+You can also use the ```get``` function of the ```http``` module instead of the ```request``` function. By using the ```get``` function you can also define your intensions better.
+
+### The ```request``` package
+
+An alternative of the ```request``` function is the ```request``` package that you can install with ```npm install request```.
+
+This is how you make a get-request to a server using the ```request``` object:
+
+```JavaScript
+import request from 'request';
+
+request(
+    'https://jsonplaceholder.typicode.com/posts',
+    (err, response, body) => {
+        console.log(body);
+    }
+)
+```
+
+The following is an example of a post-request:
+
+```JavaScript
+import request from 'request';
+
+const post = {
+    "userId": 1,
+    "id": 101,
+    "title": "Test title",
+    "body": "Test body",
+}
+
+request.post(
+    {
+        url: 'https://jsonplaceholder.typicode.com/posts', 
+        post
+    },
+    ( err, response, body ) => {
+        if (err) {
+            console.error(err);
+        } else {
+            console.log(body);
+        }
+    }
+)
+```
