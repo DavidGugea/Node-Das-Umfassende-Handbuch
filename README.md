@@ -495,3 +495,169 @@ request.post(
     }
 )
 ```
+
+# 6. Express
+
+## Express Structure
+
+![Structure of Express](ScreenshotsForNotes/Chapter6/ExpressStructure.png)
+
+The ```http``` module builds the fundamental of Express.
+
+Express uses so-called middleware functions that are executed during the request-response-cycle of Express. You can use middleware functions given by Express or you can make your own. There are also third-party middleware functions.
+
+The third layer of the architecture of Express is the Router. This component executes the right function depending on the URL from where the client made his request so that the client can get a proper response back.
+
+## Express basics
+
+A request comes from a client to the express-server. Depending on the ```http```-method and of the URL-Path a certain router will be chosen and express executes a certain number of callback functions. Inside this callback functions you have access to the ```Request``` and the ```Response``` objects. This two objects with the Router and the Middleware functions are buildling the core of Express.
+
+## The ```Request``` object
+
+The ```Request```-object is the first argument given to a routing-callback-function and represents the request that comes from the client to the Express-server.
+
+Here are the most important properties of the ```Request``` object:
+
+|Property|Description|
+|--------|-----------|
+|```method```|This is the HTTP-Method (e.g. ```GET```, ```POST```, etc. )|
+|```originalUrl```|This is the url from where the Request was sent.| 
+|```params```|This property contains all the parameters of the Request (e.g. ```request.params.id=5```, etc.)
+|```path```|This property contains the path of the URL|
+|```protocol```|The protocol of the Request (e.g. HTTP or HTTPS)|
+|```query```|The query string that is part of the URL.|
+
+You can read *header fields* with the ```get``` method. The method is *not* case-sensitive. If you are interested for example in the ```Content-Type``` header-field use ```req.get('Content-Type')```.
+
+## The ```Response``` object
+
+The ```Response``` object is the second argument given to routing-callback-fucntions and represents the response that is being sent back to the client.
+
+The most important property is ```headersSent``` which is a boolean. If this property is ```true``` that means that the headers have already been sent and you can't change them.
+
+These are the most important methods of the ```Response``` object:
+
+|Method|Description|
+|------|-----------|
+|```get(field)```|Reads the given header-field of the response|
+|```set(field, [,value])```|Sets the header-field to a specific value.|
+|```cookie(name, value, [, options])```|Sets a value to the cookie|
+|```redirect([status, path])```|Redirects the request to a different path|
+|```status(code)```|Sets the status code of the response|
+|```send([body])```|Sends the body of the response|
+|```json([body])```|Sends the body of the response. The body is an object that is transformed into a json object|
+|```end([data][, encoding])```|Sends the body of the response. You should use this method primarily if you are not sending user data such as HTML structures. Otherwise, use the ```send```-method|
+
+## Setup
+
+It's better to structure your application in smaller components. In that way you can develop it faster and you can work in teams faster, bugs are easier to solve and the structure of the application is much more clearer. Usually, for Express applications you can use the MVC-Pattern:
+
+### MVC
+
+*Model*: The model is the component that holds the data. This components also contains methods that allow you to change the data (adding, deleting, modifying data). The model components are usually connected to a database and they also contain the business-logic.
+*View*: The view components render the data to the user. They are usually HTML-Templates.
+*Controller*: The controller connects the model components with the view components. They aren't allowed to be too big and shouldn't contain any logic at all (if possible). If a controller contains too much logic, you should think about putting that logic inside a model/view-component.
+
+### Structure of an application
+
+The structure of an application depends very much on how big it is. Usually, at the beginning of an application so you don't really have to think about it. You shouldn't try to optimize the structure of an application when starting, you can refactor it later.
+
+### Structure of a small application
+
+For very small apps, build a file for every component:
+
+![The structure of a small application](ScreenshotsForNotes/Chapter6/StructureOfASmallApplication.png)
+
+This structure however works for very small apps that means *3 to 4 endpoints*.
+
+### Structure of a medium application
+
+For medium applications, meaning *10 to 15 endpoints* you can build different routes. In this type of applications you should have different folders for models, views and controllers.
+
+In order to categorize the files properly you can put the type of the controller inside the filename. If you are buildilng a controller for the login process, you can name the controller ```login.controller.js``` so that you know what the controller is responsible for.
+
+![The structure of a medium application](ScreenshotsForNotes/Chapter6/StructureOfAMediumApplication.png)
+
+### Structure of a big application
+
+A bigger application should be built out of multiple modules where each module is responsible for a certain thing. The module then contains different folders for controllers, models and views:
+
+![The structure of a big application](ScreenshotsForNotes/Chapter6/StructureOfABigApplication.png)
+
+## The ```index.js``` file
+
+The ```index.js``` file represents the start of an application. Make sure to remember that this file is only for initialization and nothing else. This file shouldn't be responsible for anything.
+
+## Routing
+
+Example of routing:
+
+```JavaScript
+import express from 'express';
+import { router } from './movie/index.js';
+
+const app = express();
+
+app.use('/movie', router);
+```
+
+Use the ```use``` method to set up a router on a certain path. The router can then set up ```GET```, ```POST``` callbacks just like the object ```app``` does. The difference is the path.
+
+Routers can restrict other routes from being executed since the first route found is also executed. If you have multiple routes that are the same, only the first one found will be executed, while the rest will be ignored.
+
+## Middleware
+
+A middleware function is a function that is exectued during the request-response-cycle. That is the time between when the request has been sent from the client and when the response has been sent to the client. You can chain this functions together. There already are middleware functions given by Express that you can use or third-party middleware functions but you can also write your own.
+
+### Writing your own middleware
+
+A middleware function has a certain signature. The first argument is the request of the client, the second argument is the response that will be sent to the client and the third function is the so-called ```next```-function which is just another callback function that is being passed to the function. It doesn't have to be named ```next```, it's just a convention. If you forget to call the ```next``` function then you will stop the chain.
+
+Example:
+
+```JavaScript
+import express from 'express';
+
+const app = express();
+
+// Writing the middleware function
+const log = (request, response, next) => {
+    console.log('this is a logger.');
+    next();
+}
+
+// Registering the middleware function in the chain
+app.use(log);
+```
+
+The signature of middleware functions is the same as the routing functions. A middleware function always takes in the request, response and the callback function.
+
+The ```next``` callback function given to the middleware function calls the next middleware function and so on. If you don't call this function the chain of middleware functions will end.
+
+You have to register the middleware function using the ```use``` method. This method also receives an optional first argument that represents the URL where the middlware function has to be executed. If no optional URL is given, the middleware function will be used for every URL. The order in which you register the middleware functions is important too. Throughout the chain of middleware functions, you always receive a reference to the request and response objects.
+
+## Static data
+
+If you want to load static data using Express, use the middleware function ```express.static``` that takes in the URL of the static data:
+
+```JavaScript
+app.use(
+    express.static(/* url */)
+);
+```
+
+## Taking in values in URLs
+
+If you want to take in an argument in an url use ```:```:
+
+```JavaScript
+router.get('/delete/:id');
+```
+
+If the value is optional add a question mark:
+
+```JavaScript
+router.get('/delete/:id?');
+```
+
+You can now get the ```id``` using ```request.params.id```. Keep in mind that the values taken from the user are always strings.
