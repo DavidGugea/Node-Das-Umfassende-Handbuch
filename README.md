@@ -661,3 +661,520 @@ router.get('/delete/:id?');
 ```
 
 You can now get the ```id``` using ```request.params.id```. Keep in mind that the values taken from the user are always strings.
+
+# 7. Template-Engines
+
+## The basics of template engines
+
+A template is a static structure ( usually an HTML document ) that contains markers that help you dynamically change the templates with certain values.
+
+These are the advantages of template engines:
+
+* **Separation of logic and markup**: Mixing HTML and JavaScript code in an application degrades the readability of the source code on both sides and thus also has a negative impact on the maintainability of the entire application. For this reason, it makes sense to separate the presentation and the application logic as much as possible. Template engines contribute to this by giving you as a developer the possibility to write templates without logic and to insert the dynamic parts via markers.
+* **Reusability**: Many template engines have features that allow you to subdivide templates to define blocks, called partials, and then dump them into separate files. Partials can be used multiple times in your application. This reusability ensures that you can make changes to the appearance of your application more quickly and conveniently.
+* **Parallelization of work**: With a template engine, you can separate the work on the frontend and backend of your application and parallelize the work. When a feature is implemented, one developer can deal with the controllers and models that need to be implemented. In the meantime, other developers can take care of implementing the templates and frontend logic. Both teams coordinate on the interface between controller and template and agree on which variables are available.
+
+There are also disadvantages when it comes to template engines. The processing of the templates by the application, i.e. searching and replacing the markers, requires time and resources. However, there are solutions for this problem as well in the form of precompiling and caching.
+
+Instead of using template strings, you can also implement such a template engine by using markers in your template and then replacing them with dynamic content using the String-```replace``` method. Markers in this case are specially marked strings. Usually, special characters such as curly braces are used here, resulting in markers such as ```{{movie}}```.
+
+Basically, there are two things you should keep in mind about template engines:
+
+* Template editing takes time and resources, whether you use your own implementation or an existing engine. The templates need to be processed.
+* Template-Engines are very hard.
+
+## Pug
+
+### Installation
+
+The ```pug``` package is an open-source project on github and can be installed with ```npm install pug```.
+
+### Pug Integration
+
+In order to integrate pug in your application after you've downloaded it using ```npm``` you must add it first in the initialization file:
+
+```JavaScript
+// Inside index.js
+
+app.set('view engine', 'pug');
+```
+
+Using ```app.set('view engine', 'pug')``` you make sure that Express changes the standard Template-Engine to ```Pug```. Now you can use the ```render``` method of the ```Response```-object to render templates.
+
+The ```render``` method expects to find the templates in a folder called ```views```. You can change this behavior using ```app.set('views', './templates')``` and change the default template-folder to be ```./templates```.
+
+The connection of a template engine to Express takes place through a method with the name ```__express``` in the respective Tempate engine. So Pug implements this method and then calls its own renderFile method. So if you want to bind to another template engine, you just need to make sure that such a method is implemented, and you are not limited to Pug.
+
+### Pug Example
+
+This is an example of the Pug syntax:
+
+```Pug
+doctype html
+html(lang="en")
+    head
+        meta(charset="UTF-8")
+        title Movie List
+        link(rel="stylesheet" href="/style.css")
+    body
+        table
+            thead
+                tr
+                    th Id
+                    th Title
+                    th Year
+                tbody
+                    tr
+                        td 1
+                        td Iron Man
+                        td 2008
+                        td
+                            a(href="/movie/delete/1") Delete
+                        td
+                            a(href="/movie/form/1") Modify
+        a(href="/movie/form") New
+```
+
+The first word of a line must be the tag. You can place more elements inside other elements using indendation. The attributes of elements are written in parentheses.
+
+This is how you can modify the rendering in the controller in order to use the Template:
+
+```JavaScript
+export async function listAction(request, response) {
+    const data = await getAll();
+    response.render(
+        `${dirname(fileURLToPath(import.meta.url))}/views/list`
+    );
+}
+```
+
+### Variables in Pug
+
+In order to set up variables in Pug, you must give the values inside the ```options``` argument of the ```render``` method:
+
+```JavaScript
+export async function listAction(request, response) {
+    const data = await getAll();
+    response.render(
+        `${dirname(fileURLToPath(import.meta.url))}/views/list`,
+        {
+            movie: data[0]
+        }
+    );
+}
+```
+
+By using so-called *interpolation* you get access to the object from the Template using the ```#{variable}``` syntax. You can also add logic to the template but the whole philosophy of Templates is the separation of logic and markup. This is how you can change the template now:
+
+```Pug
+doctype html
+html(lang="en")
+    head
+        meta(charset="UTF-8")
+        title Movie List
+        link(rel="stylesheet" href="/style.css")
+    body
+        table
+            thead
+                tr
+                    th Id
+                    th Title
+                    th Year
+                tbody
+                    tr
+                        td #{movie.id}
+                        td #{movie.title}
+                        td #{movie.year}
+                        td
+                            a(href="/movie/delete/1") Delete
+                        td
+                            a(href="/movie/form/1") Modify
+        a(href="/movie/form") New
+```
+
+### Pug commands
+
+|Command|Description|
+|-------|-----------|
+|```tag.myClass```|Build a tag with the ```class``` attribute ```myClass```|
+|```tag#myId```|Build a tag with the ```id``` attribute ```myId```|
+|```tag(href="www.google.de")```|Build a tag with the ```href``` attribute ```www.google.de```|
+|```tag text | more text```| The ```|```-sign shows that the text will go on the next line as well|
+|```${1+1}```|This command will be interpreter as JavaScript code and the output will be put inside the Template|
+|```-for(let i = 0 ; i < 10 ; i++)```|Everything that comes after ```-``` is interpreted as JavaScript code but the output won't be shown|
+|```// Comment```|This is a comment|
+
+### Pug Extends and Includes
+
+With Extends and Includes you can create reusable blocks and then assemble them into larger templates. Extends start from a base template into which specific blocks are overwritten. Includes works in the opposite way, integrating other sub-templates into a template.
+
+Here is an example of building a ```block```:
+
+```Pug
+// base.pug
+doctype html
+html(lang="en")
+    head
+        meta(charset="UTF-8")
+        title Movie list
+        link(rel="stylesheet" href="/style.css")
+    body
+
+    img.logo(src="logo.png" height="50")
+
+    block content
+        div No Content
+```
+
+Now you can take ```base.pug``` and extend another template with it and also override the ```block content```:
+
+```Pug
+extends ../../templates/base
+
+block content
+h1 Movie Database
+table
+    thead
+        tr
+            th Id
+            th Title
+            th Year
+        tbody
+            - for(let movie of movies)
+                tr
+                    td #{movie.id}
+                    td #{movie.title}
+                    td #{movie.year}
+                    td
+                        a(href="/movie/delete/" + movie.id) Delete
+                    td
+                        a(href="/movie/form/" + movie.id) Modify
+a(href="/movie/form") New
+```
+
+If you want to use ```block``` content in multiple templates, you must use ```include```.
+
+Example:
+
+```Pug
+// list-item.pug
+tr
+    td #{movie.id}
+    td #{movie.title}
+    td #{movie.year}
+    td
+        a(href="/movie/delete/" + movie.id) Delete
+    td
+        a(href="/movie/form/" + movie.id) Modify
+```
+
+You can now use this template and include it somewhere else. This type of reusable templates are put in a separate folder.
+
+```Pug
+// list.pug
+extends ../../movie/views/base
+
+block content
+    h1 Film Database
+    table
+        thead
+            tr
+                th Id
+                th Title
+                th Year
+                th
+                th
+        tbody
+            tr
+                - for(let movie of movies)
+                    include ./list-item
+    a(href="/movie/form") New
+```
+
+### Pug Mixins
+
+Pug mixins are just like functions. They can take in arguments. The output of a mixin is a Template-Block.
+
+Example:
+
+```Pug
+// list-item.pug
+mixin listItem(movie)
+    tr
+        td #{movie.id}
+        td #{movie.title}
+        td #{movie.year}
+        td
+            a(href="/movie/delete/" + movie.id) Delete
+        td
+            a(href="/movie/form/" + movie.id) Modify
+```
+
+You can now include this mixin somewhere else:
+
+```Pug
+// list.pug
+extends ../../movie/views/base
+include ./list-item
+
+block content
+    h1 Film Database
+    table
+        thead
+            tr
+                th Id
+                th Title
+                th Year
+                th
+                th
+        tbody
+            tr
+                - for(let movie of movies)
+                    +listItem(movie)
+    a(href="/movie/form") New
+```
+
+## Using Pug outside of Express
+
+Pug can also be used outside of Express:
+
+```JavaScript
+import pug from 'pug';
+
+const template = 'h1 Hello World';
+const output = pug.render(template);
+
+console.log(output);
+```
+
+In addition to the render method, there is also the renderFile method. This method allows you to save the template to a separate file. Basically, it works like the render method, except that you pass it the name of the template file instead of a template string.
+
+## Compiling
+
+To load this template, Pug current uses the readFileSync method. This function blocks the execution of the rest of the source code, waiting for the read operation to finish. However, this does not matter in pug especially if templates are used several times, because the template engine keeps a cache of previously used templates. Pug divides the process of template processing into two parts. First, the tempalte is prepared in the compile process.  The placeholders are then inserted into this compiled template. Pug performs the compile operation only once for each template. All further uses of the templates are served from the cache. You can also use this feature directly, for example by using the ```compileFile``` method.
+
+## Handlebars
+
+The Templates in handlebars are just written in plain HTML. Handlebars doesn't have its own templating-language.
+
+This template engine is very small and it doesn't have a lot of built-in functions.
+
+### Handlebars integration in Express
+
+In order to integrate handlebars you must install it first using ```npm install handlebars``` and, as previously mentioned in ```Pug```, a Template-Engine that has to be used in Express must chave the ```__express```-Method. Handlebars doesn't have that method, but there is a workaround: you can install ```express-handlebars```: ```npm install express-handlebars```.
+
+This is how you can integrate handlebars:
+
+```JavaScript
+import expressHandlebars from 'express-handlebars';
+
+app.engine('handlebars', expressHandlebars());
+app.set('view engine', 'handlebars');
+app.set('views', [`${dirname(fileURLToPath(import.meta.url))}/views/list`]);
+```
+
+You must register the ```express-handlebars``` function (the actual template-engine) to express using ```app.engine('handlebars', expressHandlebars());```. You must set the ```view engine``` to ```handlebars``` just like we did with ```Pug``` so that Express changes its standard template-engine with ```handlebars```.
+With ```app.set('views', [`${dirname(fileURLToPath(import.meta.url))}/views/list`]);``` you make handlebars look into ```movie/views```-folder for the templates.
+
+You now have to render the ```Response``` object inside the controller using handlebars:
+
+```JavaScript
+response.render(
+    'list',
+    {
+        layout: false,
+        movie: movies[0]
+    }
+);
+```
+
+You must give the name of the file as the first argument so that the response will render a file called ```list.handlebars```. You can also give other arguments to the ```options``` argument from the ```render```-method. ```layout:false``` means that handlebars won't use its standard template.
+
+This is an example of the handlebars template:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie List</title>
+</head>
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Title</th>
+                <th>Year</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{movie.id}}</td>
+                <td>{{movie.title}}</td>
+                <td>{{movie.year}}</td>
+            </tr>
+        </tbody>
+    </table>
+</body>
+</html>
+```
+
+### Conditionals and Loops
+
+You can extend the functionality of handlebars using so-called helpers. These are functions that you can execute from your templates. Some of the most important helpers are an integral part of Handlebars, for example the ```each``` helper, which allows you to iterate over data structures.
+
+You can give a data-structure to the ```render``` method and then iterate over it inside the template:
+
+```JavaScript
+// controller.js
+
+response.render('list', {layout: false, movies});
+```
+
+```HTML
+{{#each movies}}
+    <tr>
+        <td>{{this.id}}</td>
+        <td>{{this.title}}</td>
+        <td>{{this.year}}</td>
+    </tr>
+{{/each}}
+```
+
+You can access the values that you iterate over using the ```this``` keyword.
+
+## Partials
+
+Partials are parts of templates that can be reused in different parts of your application. You can register a partial in handlebars using the ```registerPartial```-method. You can also register them manually.
+
+Here is an example of a part of a template ( a partial ) that we will reuse later:
+
+```HTML
+<!-- list-item.handlebars -->
+<tr>
+    <td>{{this.id}}</td>
+    <td>{{this.title}}</td>
+    <td>{{this.year}}</td>
+    <td>
+        <a href="/movie/delete/{{this.id}}">Delete</a>
+    </td>
+    <td>
+        <a href="/movie/form/{{this.id}}">Modify</a>
+    </td>
+</tr>
+```
+
+We can now implement this in our controller:
+
+```JavaScript
+// controller.js
+
+import handlebars from 'handlebars';
+import {
+    readFileSync
+} from 'fs';
+import {
+    dirname
+} from 'path';
+import {
+    fileURLToPath
+} from 'url';
+
+const listItem = handlebars.compile(
+    readFileSync(
+        `${dirname(fileURLToPath(import.meta.url))}/views/list-item.handlebars`,
+        'utf-8'
+    )
+);
+
+export async function listAction(request, response) {
+    const movies = await getAll();
+
+    response.render(
+        'list', {
+            layout: false,
+            movies,
+            partials: {
+                listItem
+            }
+        }
+    );
+}
+```
+
+Now we can implement the partial inside the main handlebars template:
+
+```JavaScript
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie List</title>
+</head>
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Title</th>
+                <th>Year</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each movie}} {{>listItem}} {{/each}}
+        </tbody>
+    </table>
+</body>
+</html>
+```
+
+### Building Custom Helpers
+
+You can build your own helpers in handlebars and use them inside your templates. You must register the helpers when buildling the template-engine inside the initialization file:
+
+```JavaScript
+// index.js
+
+app.engine(
+    'handlebars', 
+    expressHandlebars({
+        helpers: {
+            uc: data => data.toUpperCase(),
+        }
+    })
+);
+```
+
+You can now use this inside your templates:
+
+```HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie List</title>
+</head>
+<body>
+    <table>
+        <thead>
+            <tr>
+                <th>{{ uc 'Id' }}</th>
+                <th>{{ uc 'Title' }}</th>
+                <th>{{ uc 'Year' }}</th>
+            </tr>
+        </thead>
+        <tbody>
+            {{#each movie}} {{>listItem}} {{/each}}
+        </tbody>
+    </table>
+</body>
+</html>
+```
+
