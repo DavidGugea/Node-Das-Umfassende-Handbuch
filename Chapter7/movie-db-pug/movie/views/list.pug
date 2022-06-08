@@ -1,0 +1,18 @@
+extends ../../movie/views/base
+include ./list-item
+
+block content
+    h1 Film Database
+    table
+        thead
+            tr
+                th Id
+                th Title
+                th Year
+                th
+                th
+        tbody
+            tr
+                - for(let movie of movies)
+                    +listItem(movie)
+    a(href="/movie/form") New
