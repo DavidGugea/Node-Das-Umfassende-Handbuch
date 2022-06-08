@@ -1178,3 +1178,108 @@ You can now use this inside your templates:
 </html>
 ```
 
+# 8. Connecting To Databases
+
+## MySql
+
+If you want to connect your express app to a MySql Database, use the ```mysql2``` package ( ```npm install mysql2``` ).
+
+This is an example of how to use it:
+
+```JavaScript
+import mysql from 'mysql2/promise';
+
+const connection = await mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: 'password',
+    database: 'movie-db'
+});
+
+await connection.connect();
+
+export async function getAll() {
+    const query = 'SELECT * FROM Movies';
+    const [data] = await connection.query(query);
+    return data;
+}
+```
+
+The majority of the functionality of the driver is based on ```Promise``` objects. You can stop the connection to the database using the ```end``` method.
+
+The ```query``` method returns a Promise that resolves into an array with multiple elements.
+
+If you want to insert values into a MySql database you can't use direct string concatenation, you must give the placeholder of the values and the values separately to the driver so that the driver can properly escape them. This is how you can avoid SQL Injections:
+
+```JavaScript
+async function insert(movie) {
+    const query = 'INSERT INTO Movies (title, year) VALUES (?, ?)';
+    const [result] = await connection.query(query, [movie.title, movie.year]);
+    return {
+        ...movie,
+        id: result.insertId
+    };
+}
+```
+
+## SQLite
+
+Use the ```sqlite3``` package.
+
+## ORM
+
+There are multiple ORM libraries, like Sequelize, Waterline or ORM2. Since ORMs add a level of abstraction between you and the database you can use ORMs with different database dialects since they will do all the work for you in the background. Usually when you install an ORM you also install the database driver that you want to use the ORM with.
+
+Example of Sequelize (```npm install sequelize sqlite```):
+
+```JavaScript
+import {
+    Sequelize
+} from 'sequelize';
+
+const sequelize = new Sequelize({
+    dialect: 'sqlite',
+    storage: './movie.db'
+});
+
+const Movies = sequelize.define(
+    'Movies', {
+        title: {
+            type: Sequelize.STRING,
+        },
+        year: {
+            type: Sequelize.INTEGER
+        },
+    }, {
+        timestamps: false
+    }
+);
+
+export function getAll() {
+    return Movies.findAll();
+}
+
+export function get(id) {
+    return Movies.findByPk(id);
+}
+
+export function remove(id) {
+    return Movies.destroy({
+        where: {
+            id
+        }
+    });
+}
+
+export function save(movie) {
+    return Movies.upsert(movie);
+}
+```
+
+## Redis
+
+Use the ```redis``` package (```npm install redis```).
+
+## MongoDB
+
+Use the ```mongodb``` package (```npm install mongodb```).
