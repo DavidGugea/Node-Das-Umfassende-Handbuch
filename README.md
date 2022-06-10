@@ -1283,3 +1283,124 @@ Use the ```redis``` package (```npm install redis```).
 ## MongoDB
 
 Use the ```mongodb``` package (```npm install mongodb```).
+
+# 9. Authentication and Session Management
+
+PassportJS is a modular authentication system that uses so-called strategies that can be plugged into the system. 
+
+## Setup and Configuration
+
+You must install ```passport``` ( ```npm install passport``` ) and ```express-session``` (```npm install express-session``` ) for session management. Here is an example for a setup:
+
+```JavaScript
+import passport from 'passport';
+import expressSession from 'express-session';
+
+export default function (app) {
+    passport.serializeUser(
+        (user, done) => done(null, user.username)
+    );
+    passport.deserializeUser(
+        (id, done) => {
+            const user = {
+                username: 'usernameTest',
+                firstname: 'firstNameTest',
+                lastname: 'lastNameTest',
+            };
+
+            done(null, user);
+        }
+    );
+
+    app.use(
+        expressSession({
+            secret: 'password',
+            resave: false,
+            saveUninitialized: false
+        })
+    );
+
+    app.use(passport.initialize());
+    app.use(passport.session());
+}
+```
+
+The ```serializeUser``` and ```deserializerUser``` methods accept a function that is used to restore the user data for subsequent requests. Passport stores the information in a session. To keep this data as compact as possible, you need unique information to retrieve the full user data. In the example, the username is this unique key.
+
+In the callback of the ```serializerUser``` method you get access to the user object. The second argument is another callback function. When you call it, you pass an error object or, in case of success, the value ```null``` and the serialized user information.
+
+The ```deserializeUser``` method works exactly the opposite way. You also pass a callback function to it, which receives the serialized user information and a further callback function. This callback function is in turn called with an optional error object and the deserialized user information.
+
+Usually the callback functions are named ```done```, because they are called as soon as the potentially asynchronous serialization or deserialization is completed.
+
+To allow Passport to remember the user's login across multiple requests, use the session middleware for Express. This stores the session in a browser cookie. As options, use the secret property to pass a string that signs the session cookie. Also, set the ```saveUninitialized``` property to false to prevent new uninitialized sessions from being stored on the server. The resave property ensures that unchanged session information is also saved. To change this behavior, the value is set to false. For both ```saveUninitialized``` and resave, you must set a value in both cases, otherwise a warning is thrown.
+
+By calling ```passport.initialize``` you initialize Passport and thus create the connection between Express and Passport. Using ```passport.session``` ensures that login sessions are stored using the Express session middleware.
+
+## Strategy Configuration
+
+In the following example we will configure the ```LocalStrategy``` that works with the username and password ( ```npm install passport-local``` ).
+
+```JavaScript
+import LocalStrategy from 'passport-local';
+
+passport.use(
+    new LocalStrategy(
+        (username, password, done) => {
+            if(username === 'usernameTest' && password === 'passwordTest') {
+                done(
+                    null,
+                    {
+                        username: 'usernameTest',
+                        firstName: 'firstNameTest',
+                        lastName: 'lastNameTest',
+                    }
+                );
+            } else {
+                done(null, false);
+            }
+        }
+    )
+);
+```
+
+When integrating the Strategy plug-ins, Passport follows the Express middleware system. You add a new instance of the Strategy using the use method. You create it using the constructor exported by the ```local-strategy``` package.
+
+In the specific case of local-strategy, you pass a callback function that receives the username and password as arguments. The third argument is a callback function that you can use to indicate the success or failure of the login. This callback function is required because username and password verification is asynchronous in most cases. If the login was successful, call this callback function, which you should name according to the naming convention done, with the value ```null``` and an object representation of the user. If the information entered by the user is not correct, that is, there is no matching user object, call the done function with the values null and false.
+
+Password expects the username and password to be sent to the server via a POST request, and by default are named username and password. You can customize this behavior by passing an option object as the first argument to the constructor.
+
+## Identifing a route
+
+You can also identify a route for the pass through a normal request from the ```app```. This is an example of an authenticated ```POST```-Request:
+
+```JavaScript
+app.post(
+    '/login',
+    passport.authenticate(
+        'local', {
+            failureRedirect: '/login.html'
+        },
+        (request, response) => {
+            response.redirect('/');
+        }
+    )
+);
+```
+
+You first apply Passport's authenticate method as middleware to the login route. This method logs the user in using the previously defined logic. If the login fails, the request is redirected back to the login page. If successful, the subsequent callback function is executed. It ensures that the user is redirected to the default route.
+
+## Securing resources
+
+You can also restrict users from entering certain parts of your website. For this you can use ```connect-ensure-login```:
+
+```JavaScript
+import { ensureLoggedIn  } from 'connect-ensure-login';
+
+app.use('/movie', ensureLoggedIn('/login.html'), movieRouter);
+```
+
+The connect-ensure-login package provides you with the ```ensureLoggedIn``` and ```ensureLoggedOut``` methods, which you can use to determine whether the current user is logged in or logged out in the form of middleware.
+
+You pass the route to which an unlogged-in user should be redirected to the ```ensureLoggedIn``` middleware function. 
+
