@@ -1,0 +1,57 @@
+import express from 'express';
+import morgan from 'morgan';
+import expressJwt from 'express-jwt';
+import swaggerUi from 'swagger-ui-express';
+import { router as movieRouter } from './movie/index.js.js';
+import { router as loginRouter } from './auth.js.js';
+import swaggerSpec from './swagger.js.js';
+import graphql from './graphql.js';
+
+const app = express();
+
+app.use(morgan('common', {
+    immediate: true
+}));
+
+app.use(express.json());
+
+app.use(express.urlencoded({
+    extended: false
+}));
+
+app.use('/login', loginRouter);
+app.use(
+    '/movie', 
+    expressJwt({secret: 'secret', algorithms: ['HS256']}),
+    movieRouter
+);
+
+app.use(
+    (err, request, response, next) => {
+        if (err.name === 'UnauthorizedError') {
+            response.status(401).json('unauthorized');
+        } else {
+            next();
+        }
+    }
+);
+
+app.use('/api-docs', swaggerUi.server, swaggerUi.setup(swaggerSpec));
+
+app.use(
+    '/graphql', 
+    expressJwt({ secret: 'secret', algorithms: ['HS256']}),
+    graphql
+);
+
+app.get(
+    '/',
+    (request, response) => response.redirect('/movie')
+);
+
+app.listen(
+    8080,
+    () => {
+        console.log('Server is listening to http://localhost:8080');
+    }
+);
