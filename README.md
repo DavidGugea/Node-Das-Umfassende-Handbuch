@@ -1416,3 +1416,56 @@ One of the most important features of REST is that it relies heavily on the elem
     Each resource can be accessed via a unique URL. For example, to get the record of a movie with ID 1, use the URL ```http://localhost:8080/movie/1```.
 * ***HATEOAS***
     * This acronym stands for Hypermedia as the Engine of Applicaiton State. This is the central component of a REST architecture. Through various links, the consumer of the interface is told what state changes are possible with the requested resource. This is one of the major differences between REST and other approaches such as SOAP, where there is only a fixed interface and no dynamic interface that depends on the state of the resource.
+
+# 11. GraphQL
+
+GraphQL is built out of three main components: request, scheme and resolver.
+
+* ***Request***
+    * The GraphQL client formulates a request to communicate with the server. A request can be a read - in this case you use the query type Query - or a write access, for this you use the so-called mutations. A query must always follow the rules of the server's GraphQL schema.
+* ***Scheme***
+    * The schema defines the data structure of the server and forms the basis for the queries. The schema of a GraphQL server defines an object structure using its own type system. GraphQL seems very flexible at first sight. However, this flexibility extends only to the limits set by the schema. Everything that is not defined in the schema is also not possible via the GraphQL interface.
+* ***Resolver***
+    * GraphQL is simply a means to query and manipulate data. The GraphQL interface has no knowledge about the business logic of the application. This is where the resolvers come into play. They provide the interface to the actual Node.js application and are implemented as functions.
+
+## Express Integration
+
+In order to integrate GraphQL into Express you will need 2 packages: ```graphql``` and ```express-graphql```.
+
+Here is an example of the implementation:
+
+```JavaScript
+// graphql.js
+import { buildSchema } from "graphql";
+import expressGraphql from 'express-graphql';
+
+const schema = buildSchema(`
+    type Query {
+        greet: String
+    }
+`);
+
+const rootValue = {
+    greet() {
+        return 'Hello GraphQL'
+    },
+};
+
+export default expressGraphql.graphqlHTTP({
+    schema,
+    rootValue,
+    graphiql: true,
+});
+```
+
+And then use it as middleware inside the initialization file:
+
+```JavaScript
+// index.js
+import graphql from './graphql.js';
+
+app.use('/graphql', graphql);
+```
+
+In the first code block you define the scheme. Your users can query the ```greet``` field and get a string back. The second block, the ```rootValue```, contains the resolver function for the ```greet``` field and returns the string ```Hello GraphQL``` when queried. In the last line you export the result of calling the ```graphqlHTTP``` function as default export. This allows you to include your GraphQL interface as regular express middleware in your application. When you call the ```graphqlHTTP``` function from the ```express-graphql``` package, you pass an object with the schema, the resolver functions and the ```graphiql``` property with the value ```true```.
+
