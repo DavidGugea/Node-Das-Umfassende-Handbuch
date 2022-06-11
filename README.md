@@ -1404,3 +1404,15 @@ The connect-ensure-login package provides you with the ```ensureLoggedIn``` and 
 
 You pass the route to which an unlogged-in user should be redirected to the ```ensureLoggedIn``` middleware function. 
 
+# 10. REST-Server
+
+REST stands for *Representational State Transfer*.
+
+One of the most important features of REST is that it relies heavily on the elements of the HTTP protocol and uses the URL path to map resources, as well as describing how to access them via the various HTTP methods. The main features of a REST interface are:
+
+* ***Statelessness***
+    * Each request to the service should contain all the necessary information so that the server does not need to keep any state information.
+* ***Resources***
+    Each resource can be accessed via a unique URL. For example, to get the record of a movie with ID 1, use the URL ```http://localhost:8080/movie/1```.
+* ***HATEOAS***
+    * This acronym stands for Hypermedia as the Engine of Applicaiton State. This is the central component of a REST architecture. Through various links, the consumer of the interface is told what state changes are possible with the requested resource. This is one of the major differences between REST and other approaches such as SOAP, where there is only a fixed interface and no dynamic interface that depends on the state of the resource.
