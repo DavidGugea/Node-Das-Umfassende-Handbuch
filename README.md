@@ -1469,3 +1469,28 @@ app.use('/graphql', graphql);
 
 In the first code block you define the scheme. Your users can query the ```greet``` field and get a string back. The second block, the ```rootValue```, contains the resolver function for the ```greet``` field and returns the string ```Hello GraphQL``` when queried. In the last line you export the result of calling the ```graphqlHTTP``` function as default export. This allows you to include your GraphQL interface as regular express middleware in your application. When you call the ```graphqlHTTP``` function from the ```express-graphql``` package, you pass an object with the schema, the resolver functions and the ```graphiql``` property with the value ```true```.
 
+# 12. Realtime-Web Applications
+
+## Websocket
+
+Websocket is a standalone protocol parallel to http. Like HTTP, it exists in an unencrypted and an encrypted variant. The initial communication takes place via HTTP. The client generates a request asking for a protocol switch to Websocket. As soon as the switch is completed, both endpoints, i.e. client and server, have equal rights in the communication and can send and receive messages. The processing of the messages is event-based. As soon as a message is received, an event is triggered and a callback function is executed. This means that websockets do not block and are basically asynchronous.
+
+## Example Implementation
+
+Take a look at the following example:
+
+```JavaScript
+const socket = new WebSocket('ws://localhost:8181/');
+
+socket.send('Hello Server');
+
+socket.onmessage = msg => {
+    conosle.log(msg.data);
+}
+```
+
+The first argument accepted by the constructor of ```WebSocket``` is the URL that it will connect to. Remember that the URL doesn't start with ```http```, it starts with ```ws``` since it's a websocket. There is also a secure version of this protocol called *Secure Websockets* and the URL starts with ```wss```.
+
+As a second optional argument you can pass a string to the constructor that specifies the so-called subprotocol. The subprotocol is used when you want to ensure that the client and server send messages to each other that both understand. For example, you can define a specific message format for your own application. If such a specification exists, you can specify the name of your application or, even better, the name of your communication protocol as the subprotocol. The client and server will then only accept connections with the corresponding subprotocol.
+
+The websockets must be closed again at the end. This is done using the ```close``` method of the websocket object. This method does not receive any parameters. If the websocket connection is closed by the other side, an event is triggered. This causes the callback function that you assign to the ```onclose``` property to be executed. Finally, the last event you should be aware of in the context of the websocket API is the ```open``` event. As with ```onclose```, you can assign a callback function to the ```onopen``` property of the Websocket object, which is executed as soon as the Websocket connection is established.
