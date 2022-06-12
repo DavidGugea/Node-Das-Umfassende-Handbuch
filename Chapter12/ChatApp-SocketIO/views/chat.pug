@@ -1,0 +1,61 @@
+html
+    head
+        script(src="/socket.io/socket.io.js")
+    body
+        div(style="width: 500px; text-align: right;")
+            a(href='/logout') Logout
+
+        div#msgs(style="height:400; width:400; overflow: scroll; float: left;")
+        div#users(style="height: 400px; width: 100px; overflow: scroll;")
+
+
+        form#chatForm
+            label(for="msg") #{user}:&nbsp;
+            input#name(type="hidden", value=user)
+            input#name(type="text")
+            input#msg(type="text")
+            button#sendBtn Send
+
+        script.
+            const socket = new io.connect('http://localhost:8080/');
+            const name = document.querySelector('#name').value
+
+            socket.on('connect', () => {
+                socket.emit('join', { name });
+            });
+
+            document.querySelector('#sendBtn').addEventListener(
+                'click'
+                (event) => {
+                    event.preventDefault();
+
+                    const name = document.querySelector('#name').value;
+                    const msg = document.querySelector('#msg').value;
+
+                    socket.emit('msg', { msg });
+                    document.querySelector('#msg').value = '';
+                }
+            );
+
+            socket.on(
+                'msg',
+                data => {
+                    const msgEl = document.createElement('div');
+                    msgEl.innerText(`${data.name}: ${data.msg}`);
+
+                    document.querySelector('#msgs').appendChild(msgEl);
+                }
+            );
+
+            socket.on(
+                'join',
+                data => {
+                    document.querySelector('#users').innerHTML = '';
+                    data.names.forEach(name => {
+                        const userEl = document.createElement('div');
+                        userEl.innerText = name;
+
+                        document.querySelector('#users').appendChild(userEl);
+                    });
+                }
+            )
