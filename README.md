@@ -1494,3 +1494,7 @@ The first argument accepted by the constructor of ```WebSocket``` is the URL tha
 As a second optional argument you can pass a string to the constructor that specifies the so-called subprotocol. The subprotocol is used when you want to ensure that the client and server send messages to each other that both understand. For example, you can define a specific message format for your own application. If such a specification exists, you can specify the name of your application or, even better, the name of your communication protocol as the subprotocol. The client and server will then only accept connections with the corresponding subprotocol.
 
 The websockets must be closed again at the end. This is done using the ```close``` method of the websocket object. This method does not receive any parameters. If the websocket connection is closed by the other side, an event is triggered. This causes the callback function that you assign to the ```onclose``` property to be executed. Finally, the last event you should be aware of in the context of the websocket API is the ```open``` event. As with ```onclose```, you can assign a callback function to the ```onopen``` property of the Websocket object, which is executed as soon as the Websocket connection is established.
+
+# 13. Typesafe Applications in Node.js
+
+-
