@@ -1498,3 +1498,158 @@ The websockets must be closed again at the end. This is done using the ```close`
 # 13. Typesafe Applications in Node.js
 
 -
+
+# 14. Webapplications with Nest
+
+## Installation and first steps
+
+In order to use the nestjs cli you can install it globally using ```npm install -g @nestjs/cli```. You can now use the ```new``` command to start a new nestjs project: ```nest new project-name```.
+
+## The build process
+
+Since NestJS is working with TypeScript, when you are running ```npm start```, a folder with the compiled JavaScript source code called ```dist``` is built. This is called the build process.
+
+## The NestJS CLI
+
+|Command|Short form|Description|
+|-------|----------|-----------|
+|```nest new [Options] [Name]```|```n```|Builds a new Nest application|
+|```nest build [Options] [App]```||Builds the Nest application|
+|```nest start [Options] [App]```||Starts the Nest application|
+|```nest info```|```i```|Gives information about the versions of the system|
+|```nest update [Options]```|```u```|Updates the Nest-Dependencies|
+|```nest add [Options] [Library]```||Adds a new library to the application|
+|```nest generate [Options] [Schematic] [Name] [Path]```|```g```|Generates a new nest-element.|
+
+## Generating NestJS Elements
+
+Using the ```nest generate``` CLI function you can generate elements inside a NestJS application. This means buildilng files and folders with some predefined TypeScript.
+
+|Name|Short form|Description|
+|----|----------|-----------|
+|```application```||Builds a new application-workspace|
+|```class```|```cl```|Builds a new TypeScript-Class|
+|```configuration```|```config```|Build a new CLI-Configuration|
+|```controller```|```co```|Builds a new controller|
+|```decorator```|```d```|Builds the buildling blocks for a user-defined decorator|
+|```filter```|```f```|Builds a filter|
+|```gateway```|```ga```|Builds a new gateway|
+|```guard```|```gu```|Builds the structure for a new guard|
+|```interceptor```|```in```|Builds an interceptor|
+|```middleware```|```mi```|Builds a middleware-component|
+|```module```|```mo```|Builds a module|
+|```pipe```|```pi```|Builds a pipe|
+|```provider```|```pr```|Builds a provider|
+|```resolver```|```r```|Builds a resolver|
+|```service```|```s```|Builds a service|
+|```library```|```lib```|Builds a new library inside the monorepo|
+|```sub-app```|```app```|Builds a new application inside the monorepo|
+|```resource```|```res```|Builds a new CRUD-Resource|
+
+## What is a monorepo
+
+A monorepo is a repository in which the frontend and the backend are not separated in different repositories, they are all in one big *monorepo*. The advantage of monorepos is that the different parts of it (frontend, backend, etc.) are a lot easier to manage.
+
+## The root folder with the configuration files
+
+A best practice in JavaScript is to put all of the configuration files inside the root folder.
+
+These are the configuration files that NestJS builds for a new application:
+
+|File name|Description|
+|---------|-----------|
+|```.eslintrc```|The file for eslint linting.|
+|```.gitignore```||
+|```.prettierrc```||Code formatter||
+|```nest-cli.json```||Contains the mata data, that nest needs to build and deploy your application||
+|```package-lock.json```||
+|```package.json```||
+|```README.md```||
+|```tsocnfig.build.json```|This file contains the configuration for buildling the application|
+|```tsconfig.json```|This file contains data about the TypeScript-Compiler and how the TypeScript-Code is transformed into JavaScript-Code|
+
+## The ```src``` and ```dist``` folders
+
+The ```src``` folder contains the source code of the application.
+The ```dist``` folder is built by ```nest start``` or ```nest build```. This folder contains the compiled source code of the application, the JavaScript source code.
+
+## Modules
+
+The largest unit in a Nest application is the module. You can think of modules as a kind of container that contains various other structures such as controllers or services. An application consists of at least one module, the app module, but can consist of any number of modules. Modules are usually cut thematically.
+
+### Adding a moduleo
+
+In order to add a module use ```nest generate module module-name```.
+
+### The Module-Decorator
+
+A module usually contains an empty exported TypeScript-class that binds additional information to the class. In this case we have 4 pieces of information:
+
+* ```imports```: Add references to modules and their features
+* ```controllers```: Reference the controller of the module. By going through this step you are activating the endpoints that are built inside the controller
+* ```providers```: The ```providers```-Array contains providers such as services. These information is used for the dependecy injection made by Nest.
+* ```exports```: With ```exports``` you specify the structures that have are exported from your module.
+
+## Controller - The Application Endpoint
+
+At its core, Nest is based on Express and uses the routing and MIddleware features of the framework. However, the two frameworks differ significantly in the definition of routes. Where in Express you define the routes on your ```app``` object or separately via a router, in Nest you work with a controller and there with additional decorators to create new routes.
+
+### Building a new controller
+
+In order to build a new controller use the CLI: ```nest generate controller controller-name```.
+
+Here is an example of a controller:
+
+```TypeScript
+import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put } from '@nestjs/common';
+
+@Controller('movie')
++export class MovieController {
+  private data = [
+    { id: 1, title: 'Iron Man', year: 2008 },
+    { id: 2, title: 'Thor', year: 2011 },
+    { id: 3, title: 'Captain America', year: 2011 },
+  ];
+
+  @Get()
+  getAllMovies(){
+    return this.data;
+  }
+
+  @Get(':id')
+  getOneMovie(@Param('id') id: string) {
+      return this.data.find(movie => movie.id === parseInt(id, 10));
+  }
+
+  @Post()
+  createNewMovie(@Body movie: InputMovie) {
+    const nextId = Math.max(...this.data.map(movie => movie.id) + 1;)
+    movie.id = nextId;
+    this.data.push(movie);
+
+    return movie;
+  }
+
+  @Put(':id')
+  updateMovie(@Param('id') id: string, @Body() movie: Movie): {
+    const index = this.data.findIndex(movie => movie.id === parseInt(id, 10));
+    this.data[index] = movie;
+
+    return movie;
+  }
+
+  @Delete(':id')
+  @HttpCode(224)
+  removeMovie(@Param('id') id: string): void {
+      this.data = this.data.filter(movie => movie.id !== parseInt(id, 10));
+  }
+}
+```
+
+## Providers
+
+The more extensive the logic behind an endpoint becomes, the longer the methods become. In order to counteract this problem and to prevent the controller from growing to the point of being unmanageable, Nest provides for so-called servies.
+
+These are classes that you can load and use as needed in your controllers or even in other services. A service is a special form of a provider. Other forms of providers are, for example, repositories, factories or helpers. 
+
+You can build a service using the CLI: ```nest generate service service-name```.
