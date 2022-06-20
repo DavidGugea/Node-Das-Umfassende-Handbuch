@@ -1,0 +1,1 @@
+{"version":3,"file":"movie.module.js","sourceRoot":"","sources":["../../src/movie/movie.module.ts"],"names":[],"mappings":";;;;;;;;;AAAA,2CAAwC;AACxC,yDAAqD;AAQrD,IAAa,WAAW,GAAxB,MAAa,WAAW;CAAG,CAAA;AAAd,WAAW;IANvB,IAAA,eAAM,EAAC;QACN,OAAO,EAAE,EAAE;QACX,WAAW,EAAE,CAAC,kCAAe,CAAC;QAC9B,SAAS,EAAE,EAAE;QACb,OAAO,EAAE,EAAE;KACZ,CAAC;GACW,WAAW,CAAG;AAAd,kCAAW"}
