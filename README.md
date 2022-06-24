@@ -1653,3 +1653,233 @@ The more extensive the logic behind an endpoint becomes, the longer the methods 
 These are classes that you can load and use as needed in your controllers or even in other services. A service is a special form of a provider. Other forms of providers are, for example, repositories, factories or helpers. 
 
 You can build a service using the CLI: ```nest generate service service-name```.
+
+# 15. Node on the command line
+
+```>```
+
+## How to use console applications
+
+When buildling a console application you should stick to the standard ```<command> <options> <arguments>``` pattern regardless if node gives you a lot of freedom.
+
+* **Command**
+    * The command designates the executable file of the tool.Normally, you can omit file name extensions such as .exe or .bat. If you have not placed the file within the search path of your system, you must precede the command with the absolute or relative path to the file. So, for frequently used commands, it is recommended that you expand the system search path and copy the executable file of the tool to a location that is included in the search path, or at least create a shortcut there.
+* **Options**
+    * The options of a command influence its execution. So you can use options to control what exactly your application should do. If you set an option to only one letter, the option should also only consist of one letter. If the option needs a value, it is separated from the option by a space.
+* **Arguments**
+    * With arguments you have the possibility to pass information to the command.
+
+## The structure of a console application
+
+### File and directory structure
+
+Normally, a command line application has at least two subdirectories:
+
+* **lib**
+    * The lib directory contains the actual application. Depending on how large the tool is, you can distribute the source code over several files and subdirectories. As an alternative to the name lib, you can also name these directories src. Both variations are quite common.
+* **bin**
+    * The executable files are located in the bin directory of the application. If you follow this convention, it is easy for outsiders to get started with the application.
+
+In addition to the directories and files of the application, there is also the package configuration in the form of the package.json file. Following the convention, you should store the index.js file, which is the entry point to your application, in the lib directory. One of the features of a command line application is that you can call the tool directly and do not have to use the node command first. For this purpose, you can make use of the so-called shebang on Unix systems. This is a standardized string that tells the system how to execute the script:
+
+```JavaScript
+#!usr/bin/env node
+
+import '../lib/index.js';
+```
+
+### Package Definition
+
+As a general best practice, you should set the key ```private``` to the value ```true``` so that you do not accidentally publish your application. After we use the ECMA script module system, define the value ```module``` as ```type```. The ```bin``` object also represents a mapping from the command to the executable. You can delete the entries ```main``` for the entry point and ```scripts``` for various helper scripts for now.
+
+## Using a node application on the command line
+
+You can install your application with the ```npm install -g``` command so that you can then use it directly on the command line, or you can use the ```npm link``` command. In this case, you drop the npm link command in the root directory of your application. NPM takes care of everything else by making sure that the application is installed globally. For this purpose, a symbolic link is created in the global directory to the executable file. It also links the application directory to the global *node_modules* directory. The advantage of ```npm link``` over an installation with ```npm install``` is that durhc the link all changes to the application take effect immediately and you do not have to reinstall the application. With the command ```npm uninstall -g project```  you can remove the link again when you have finished the development.
+
+## Taking input using ```readline```
+
+You can take input from the user by using the ```readline``` module:
+
+```JavaScript
+import { createInterface } from 'readline';
+
+const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+});
+
+rl.question(
+    "What's your name ? ",
+    name => {
+        console.log(`Hello ${name}`);
+        rl.close();
+    }
+);
+```
+
+You can constantly use callbacks or use asynchronous programming:
+
+```JavaScript
+import { createInterface } from 'readline';
+
+const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout
+});
+
+function promisedQuestion(question) {
+    return new Promise(
+        resolve => {
+            rl.question(question, answer => resolve(answer))
+        }
+    );
+}
+
+const user = {
+    name: '',
+    city: ''
+};
+
+user.name = await promisedQuestion("What's your name? ");
+user.city = await promisedQuestion("Where do you live? ");
+
+console.log(`Hello ${user.name} from ${user.city}`);
+
+rl.close();
+```
+
+### Options and arguments
+
+The ```argv``` property of the ```process``` module allows you to access the command line of the application. It contains an array that stores the individual betsand parts of the command line command by which the current process was invoked. The first element of the ```argv``` array is the Node.js executable file with the complete path. The second element is the absolute path of the executed scriptip, and all other elements map the options and arguments.
+
+```JavaScript
+export default function getOptions(levelDefault = 2, amountDefault = 4) {
+    const level = getOptionValue(getOption('level'), levelDefault);
+    const amount = getOptionValue(getOption('amount'), amountDefault);
+
+    return {
+        level,
+        amount
+    };
+}
+
+function getOption(optionName) {
+    return process.argv.find(element => element.includes(optionName));
+}
+
+function getOptionValue(option, defaultValue) {
+    if (option) {
+        const [, value] = option.split('=');
+        return parseInt(value, 10);
+    }
+
+    return defaultValue;
+}
+```
+
+## Tools
+
+### Commander
+
+For command line parsing, you can include Commander in your application. Install it with ```npm install commander```.
+
+```JavaScript
+import program from 'commander';
+
+export default (levelDefault = 2, amountDefault = 4) => {
+    program
+        .version('1.0.0')
+        .option(
+            '-l, --level <n>',
+            'Difficulty level (1-3)',
+            parseInt,
+            levelDefault
+        )
+        .option(
+            '-a, --amount <n>',
+            'The amount of exercises',
+            parseInt,
+            amountDefault
+        )
+        .parse(process.argv);
+
+    const options = program.opts();
+
+    return {
+        level: options.level,
+        amount: options.amount,
+    };
+};
+```
+
+Using the option method of the Commander package you can define the individual options of your application. The method expects the name of the option as the first argument. Here you can specify both the short and the long variant. If you want to be able to pass a value to the application via the option, specify it afterwards. You have two different options for specifying the value: If you place the value in angle brackets, it is mandatory. If you want to define an optional option, use square brackets here. The second parameter of the options method stands for the description of the option. This is displayed in the help menu. As a third argument you can pass a function to manipulate the value. 
+
+For Commander to work, you must use the ```parse``` method to specify which data structure to evaluate. In most cases this will be the ```process.argv``` array, but here you have the options to specify any array that follows the rules of ```process.argv```.
+
+All methods of the commander object return the object itself, so that a fluent interface notation becomes possible and you can directly concatenate the method calls.
+
+You can get to the wrte passed in the application call by using the opts method. This returns an object containing the individual options and the associated values as key-value pairs.
+
+### Chalk
+
+You can use the ```chalk``` package to use color in the terminal.
+
+```JavaScript
+import chalk from 'chalk';
+
+console.log(chalk.red('red'));
+```
+
+### node-emoji
+
+Use the package ```node-emoji``` to use emojis inside the terminal.
+
+## Signals
+
+On a Unix system, a signal is a message to a process. Often, such signals are used to terminate a process. However, you also have the option to send only information to the process, for example, that the window size has changed. Most signals you send to a Node.js process cause an event to which you can bind a callback function to respond to the signal. For example, if a user presses the key combination ``Ctrl+C``, the ``SIGINT`` singnal is triggered. You can intercept this with ```process.on('SIGINT', () => {})``` and react accordingly. 
+
+Here is an example of using signals inside a real-world program:
+
+```JavaScript
+export default (rl, tasks) => {
+    n
+    rl.on(
+        'SIGINT',
+        () => {
+            const solvedCount = tasks.reduce(
+                (solvedCount, task) => {
+                    if (task.input !== '') {
+                        solvedCount++;
+                    }
+
+                    return solvedCount;
+                },
+                0
+            );
+
+            console.log(`${solvedCount} -- ${tasks.length}`);
+        }
+    );
+
+    rl.close();
+}
+```
+
+## Exit Codes
+
+Signals are means by which you can communicate with an application. Exit codes work in exactly the opposite direction. An exit code is in a way the return value of an application. With the command ``echo $?``` you read the exit code of the last command on the command line on a Unix system. Normally, a Node.js application exits with exit code 0. This means that the application terminated without any problem. An exit code with a value greater than 0 indicates an error.
+
+|Code|Description|Meaning|
+|----|-----------|-------|
+|1|Uncaught Fatal Exception|An exception occurred that was not caught and caused the application to terminate.|
+|3|Internal JavaScript Parse Error|The Node.js source code itself caused a parse error.|
+|4|Internal JavaScript Evaluation Failure|An error occurred while executing Node.js.|
+|5|Fatal Error|A Fatal Error occurred in the V8 engine.|
+|6|Non-functional Internal Exception Handler|An Exception occurred and was not caught. The internal exception handler was disabled|
+|7|Internal Exception Handler Run-Time Failure|An exception occurred, was not caught, and the internal exception handler threw an exception itself.
+|9|Invalid Argument|An invalid option was passed during the call.|
+|10|Internal JavaScript Run-Time Failure|An exception occurred while bootstrapping Node.js.|
+|12|Invalid Debug Argument|An invalid port was specified for the debugger.|
+|>128|Signal Exit|If Node.js is terminated by a signal, the exit code 128 plus the value of the signal is set.|
+
+Node.js automatically sets the correct exit code in most cases. However, you can also specify an exit code yourself. You use the exit method of the process module to end the current process. This method accepts an integer as an argument, which is used as the exit code.
