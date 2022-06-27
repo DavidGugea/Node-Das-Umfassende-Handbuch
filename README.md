@@ -1883,3 +1883,91 @@ Signals are means by which you can communicate with an application. Exit codes w
 |>128|Signal Exit|If Node.js is terminated by a signal, the exit code 128 plus the value of the signal is set.|
 
 Node.js automatically sets the correct exit code in most cases. However, you can also specify an exit code yourself. You use the exit method of the process module to end the current process. This method accepts an integer as an argument, which is used as the exit code.
+
+# 16. Asynchronous Programming
+
+## Process vs Threads
+
+A *process* is the representation of a program in an operating system. A process occupies an area of the main memory that is normally exclusively available to it. In addition a process receives computing time of the processor, in order to accomplish computations. 
+
+A *thread* on the other hand is a part of a process and designates an execution thread within a program. This means concretely that a process can consist of several threads. A thread has access to the resources of the process to which it is assigned. Each thread of a process has its own stack. This is a speciher into which the thread can store elements and read them out of it again. This stack is exclusive to a thread. The other threads of the process cannot access it. 
+
+If you run Node.js, a process is started. Within this process, a single thread runs because the Node.js platform takes a single-threaded approach.
+
+Node.js supports both multiple processes and multiple threads within an application. Both variants are represented by different modules, the ```child_process``` and the ```worker_threads``` module.
+
+## Basic methods of ```child_process```
+
+### The ```exec``` and ```execFile``` methods
+
+The simple variant for the execution of external commands are the two ```exec``` commands: 
+
+```JavaScript
+import { exec } from 'child_process';
+
+const cmd = 'find /usr/local -iname "node"';
+
+exec(
+    cmd,
+    (error, stdout, stderr) => {
+        if (error) {
+            throw err;
+        }
+
+        console.log(stdout);
+    }
+);
+```
+
+This is an example of ```execFile```:
+
+```JavaScript
+import { execFile } from "child_process";
+
+execFile(
+    './input.js',
+    (err, stdout, stderr) => {
+        console.log(stdout);
+    }
+);
+```
+
+### The ```spawn``` method
+
+Unlike the beidden ```exec``` methods, ```spawn``` does not operate on a buffer of the output of the command. Instead, both the inputs and outputs of the process are available as data streams.
+
+This has the advantage that you are not limited to a maximum output size when using ```spawn```, and you get access to the data at the time it is created, not when the command has finished.
+
+```JavaScript
+import { spawn } from 'child_process';
+
+const find = spawn(
+    'find',
+    ['.', '-iname', 'node'],
+    {
+        cwd: '/usr/local'
+    }
+);
+
+find.stdout.on(
+    'data',
+    data => {
+        console.log(data.toString());
+    }
+);
+```
+
+## Promisify
+
+The ```promisify``` function of the ```util``` module accepts as its only argument a function that follows the Node.js callback standard, i.e., defines as its last parameter a callback function that in turn has as its first parameter an error object in its signature.
+
+```JavaScript
+import { readFile } from 'fs';
+import { promisify } from 'util';
+
+const promisedReadFile = promisify(readFile);
+
+promisedReadFile('input.txt', 'utf-8')
+    .then(data => console.log(data))
+    .catch(error => console.error(error));
+```
