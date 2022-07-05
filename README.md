@@ -2133,3 +2133,120 @@ subject.subscribe(data => console.log(`Subject 2 : ${data}`));
 
 subject.next(Math.random());
 ```
+
+# 18. Streams
+
+## What do you need streams for
+
+Streams are used for the input/output of data. The whole data is looked at as a stream, meaning that you don't read it as a whole, you are constantly reading parts of it until there's no data to process anymore. Processing meaning reading or writing. The data is read in so-called chunks that have certain default sizes (you can change the size of a chunk read/written). Streams are very flexible and they can be combined with each other. You can have for example a stream that is reading data from a file and another stream that is combined with the data that is being read from the first stream that writes data in another file.
+
+## Multiple types of streams
+
+* Readable Streams
+    * This streams are used to read data from a file
+* Writable Streams
+    * This streams are used to write data to a file
+* Duplex Streams
+    * Duplex streams are streams that implement both the Readable and Writable interfaces.
+* Transform Streams
+    * Transform streams are Duplex streams where the output is in some way related to the input. Like all Duplex streams, Transform streams implement both the Readable and Writable interfaces.
+
+## Buildling a readable stream
+
+```JavaScript
+import { createReadStream } from 'fs';
+
+const options = {
+    encoding: 'utf8'
+};
+
+const readStream = createReadStream('input.txt', options);
+
+readStream.on(
+    'readable',
+    () => {
+        const data = readStream.read();
+
+        if (data) {
+            console.log(data);
+        }
+    }
+);
+```
+
+### Piping
+
+You can pipe a readable stream with a writable stream:
+
+```JavaScript
+import { createReadStream, createWriteStream } from 'fs';
+
+const read = createReadStream('input.txt');
+const write = createWriteStream('output.txt');
+
+read.pipe(write);
+```
+
+The script above is just copying the data from ```input.txt``` to ```output.txt``` by piping the readable stream to the writable stream. All the data that is read by the reading stream is taken by the writable stream and put into the new file ```output.txt```.
+
+### Two types of readable streams
+
+* Flowing Mode ( Push-Stream )
+    * In flowing mode, data is read from the underlying system automatically and provided to an application as quickly as possible using events via the EventEmitter interface.
+* Paused Mode ( Pull-Stream )
+    * In paused mode, the ```stream.read()``` method must be called explicitly to read chunks of data from the stream.
+
+## Writable Stream
+
+```JavaScript
+import { createWriteStream } from 'fs';
+
+const writeStream = createWriteStream('output.txt');
+
+const data = ["Hello", "World"];
+
+data.forEach(
+    item => writeStream.write(`${item}\n`)
+);
+
+writeStream.end(null);
+```
+
+## Duplex Stream
+
+```JavaScript
+import { createServer } from 'net';
+
+createServer(
+    socket => {
+        socket.on(
+            'readable', 
+            () => {
+                const data = socket.read();
+                console.log(data);
+        });
+
+        socket.end("Hello Client");
+    }
+).listen(4321);
+```
+
+## Transform Stream
+
+```JavaScript
+import { createReadStream, createWriteStream } from "fs";
+import { Transform } from 'stream';
+
+const read = createReadStream('input.txt');
+const write = createWriteStream('output.txt');
+
+class ToUpperCase extends Transform { 
+    _transform(chunk, encoding, callback) {
+        this.push(chunk.toString().toUpperCase());
+        callback();
+    }
+};
+
+const toUpperCase = new ToUpperCase();
+read.pipe(toUpperCase).pipe(write);
+```
