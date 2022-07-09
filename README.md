@@ -2250,3 +2250,40 @@ class ToUpperCase extends Transform {
 const toUpperCase = new ToUpperCase();
 read.pipe(toUpperCase).pipe(write);
 ```
+
+# 20. Socket-Server
+
+Sockets in Node.js are just data streams that are built on the ```stream```-Module. They can be used as data streams to send or get data from another connection. The whole communication is asynchronous.
+
+Example:
+
+```JavaScript
+// server.js
+import { createServer } from 'net';
+
+const server = createServer(
+    connection => {
+        connection.on('readable', data => {
+            console.log(connection.read().toString());
+        });
+
+        connection.on('end', () => {
+            console.log('connection end');
+        });
+    }
+);
+
+server.listen('/tmp/node.js.sock', () => {
+    console.log('Server listening on /tmp/nodejs.sock');
+});
+```
+
+```JavaScript
+// client.js
+import { connect } from 'net';
+
+const client = connect('/tmp/nodejs.sock', () => {
+    console.log('Connected to the server');
+    client.write("Hello server");
+});
+```
