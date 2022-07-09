@@ -2287,3 +2287,80 @@ const client = connect('/tmp/nodejs.sock', () => {
     client.write("Hello server");
 });
 ```
+
+# 21. Package Manager
+
+## Searching for packages
+
+Search for packages using ```npm search <name>```. You will receive a table with *name*, *description*, *author* and *keywords*.
+
+## Installing package
+
+Install packages using ```npm install <package-name>```
+
+### Global installation
+
+In order to install a package globally add ```-g``` or ```--global```: ```npm install -g typescript```.
+
+### Types of packages
+
+There are multiple types of dependencies, disregarding the normal dependencies:
+
+* ```devDependencies```: These are dependencies that are only used for the development of the application. This can be linters and testing dependencies. You can install a dependency as a dev-dependency using ```npm install --save-dev <name>``` or the short form ```npm install -D <name>```.
+* ```optionalDependencies```: These are dependencies that are not installed if they are not needed.
+* ```bundldedDependencies```: These are dependencies that are used when publishing a package.
+
+### Packages and VCS
+
+Adding ```node_modules``` inside ```.gitignore``` is a best practice. We don't want to commit the ```node_modules``` folder.
+
+## Showing installed packages
+
+```nmp list --all``` shows all the pacakges installed. You can control the depth of the list shown by adding the ```depth``` option: ```npm list --depth = 0```
+
+## Update and delete packages
+
+Use ```npm update``` to update packages, ```npm outdated``` to see all the outdated packages and ```npm uninstall <package-name>``` to delete a package.
+
+## Npm scripts
+
+* **```publish```**
+    * executes when using ```npm publish``` or ```npm install```
+* **```install```**
+    * executes when using ```npm install```
+* **```uninstall```**
+    * executes when using ```npm uninstall```
+* **```version```**
+    * executes when using ```npm version```
+* **```test```**
+    * this is used to test your application
+* **```start```**
+    * starts the application
+* **```stop```**
+    * stops the application
+* **```restart```**
+    * restarts the application
+
+## Tools for NPM
+
+### Node License Finder
+
+The ```nlf``` (node license finder) finds licenses for all the dependencies of your app. It starts searching for dependencies inside the ```package.json``` file. Install it using ```npm install -g nlf``` and then:
+
+```bash
+$ nlf
+```
+
+### npm-check-updates
+
+Install ```ncu``` using ```npm install -g ncu```. It checks for the updates of all the dependencies. These might be udpates not recognized by ```npm update```.
+
+### npx
+
+If you have installed ```nodemon``` for example locally, and you would want to execute it, you would have to search for the executable of ```nodemon``` inside a ```./bin``` folder inside ```node_modules```. This is where ```npx``` helps you.
+
+```npx``` is a **package runner**. That means that you could run for example nodemon locally using ```npx nodemon start``` without having to search for its executable inside ```node_modules```.
+
+## Yarn
+
+Yarn is a better-version of npm. It has a pacakge cache so that you only have to install a package once, it is more secure and more reliable.
