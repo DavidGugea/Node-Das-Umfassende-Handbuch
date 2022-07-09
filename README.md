@@ -2364,3 +2364,33 @@ If you have installed ```nodemon``` for example locally, and you would want to e
 ## Yarn
 
 Yarn is a better-version of npm. It has a pacakge cache so that you only have to install a package once, it is more secure and more reliable.
+
+# 22. Quality Assurance
+
+## Style Guides
+
+Style guides are used in order to provide a linear style in all files of a source code, regardless of how many people are working on it. There are multiple style guides but the most well known are:
+
+1. Airbnb JavaScript Style Guide
+1. Google JavaScript Style Guide
+1. JavaScript Standard Style
+
+## Linter
+
+Linters are used to scan static code and show the errors that you have made inside your source code when it comes to styling. The best linter at the moment is eslint. It shows you the antipatterns of the design of your source code. It can be extended with plugins.
+
+Donwload it using ```npm i -G eslint``` and then use ```eslint --init``` to build a ```.eslintrc.json``` configuration file ( you can build the configuration file in YAML or JavaScript as well, it doesn't have to be a JSON file ).
+
+You can find the rules of eslint here https://eslint.org/docs/latest/rules/ and change the consequences of not respecting the rules however you want (off, warn, error).
+
+## Prettier
+
+Prettier does what ```eslint --fix <file-name.js>``` does, it corrects the style mistakes that you've made inside a file.
+
+For example:
+
+```npx prettier --single-quote --write index.js```.
+
+## Husky
+
+This tool can be used to create git-hooks that automatically modify your code whenever you are staging it or adding it. Example: ```npx husky add .husky/pre-commit "npm run lint"```.
