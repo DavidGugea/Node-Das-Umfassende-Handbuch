@@ -1,0 +1,17 @@
+{
+  "name": "chapter23",
+  "version": "1.0.0",
+  "description": "",
+  "main": "buffer.js",
+  "type": "module",
+  "scripts": {
+    "test": "jasmine"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "jasmine": "^4.2.1",
+    "jest": "^28.1.2"
+  }
+}
